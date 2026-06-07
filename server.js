@@ -6,7 +6,18 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: [process.env.CLIENT_URL, 'http://localhost:5173'], credentials: true } });
+
+// FIX 1: Added Vercel URL to Socket.io CORS
+const io = new Server(server, {
+  cors: {
+    origin: [
+      process.env.CLIENT_URL,
+      'http://localhost:5173',
+      'https://dsa-arena-frontend-umber.vercel.app'
+    ],
+    credentials: true
+  }
+});
 
 // Register on the app so any route can access it via req.app.get('io')
 app.set('io', io);
@@ -29,8 +40,8 @@ const { scheduleHourlyDecay } = require('./cronScheduler');
 
 // --- Route imports ---
 const solveRoutes = require('./routes/solveRoutes');
-const userRoutes  = require('./routes/userRoutes');
-const authRoutes  = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const PORT = process.env.PORT || 5000;
 
@@ -42,14 +53,23 @@ scheduleDailyReset();
 scheduleHourlyDecay();
 
 // --- Middleware ---
-app.use(cors({ origin: [process.env.CLIENT_URL, 'http://localhost:5173'], credentials: true }));
+// FIX 2: Added Vercel URL to Express API CORS
+app.use(cors({
+  origin: [
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'https://dsa-arena-frontend-umber.vercel.app'
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // --- Routes ---
-app.use('/api/auth',   authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/solves', solveRoutes);
-app.use('/api/users',  userRoutes);
+app.use('/api/users', userRoutes);
 
 // --- Health check ---
 app.get('/', (req, res) => {
